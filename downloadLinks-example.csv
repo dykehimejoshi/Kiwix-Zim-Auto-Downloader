@@ -1,0 +1,12 @@
+URL,Name
+# Wikipedia
+https://download.kiwix.org/zim/wikipedia_en_computer_maxi.zim,     Computer
+https://download.kiwix.org/zim/wikipedia_en_mathematics_maxi.zim,  Mathematics
+# Stack exchanges
+https://download.kiwix.org/zim/vi.stackexchange.com_en_all.zim,           Vim
+https://download.kiwix.org/zim/cs.stackexchange.com_en_all.zim,            CompSci
+https://download.kiwix.org/zim/engineering.stackexchange.com_en_all.zim,   Engineering
+https://download.kiwix.org/zim/raspberrypi.stackexchange.com_en_all.zim,   Raspberry Pi
+# Misc
+https://download.kiwix.org/zim/archlinux_en_all_nopic.zim, Arch Linux Wiki (No pictures)
+https://download.kiwix.org/zim/bulbagarden_en_all_maxi.zim,        Bulbagarden (pokemon)

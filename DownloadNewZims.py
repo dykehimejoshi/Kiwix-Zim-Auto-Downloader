@@ -96,8 +96,8 @@ def download_zim(item):
                         f.write(chunk)
                         # Calculate hash while downloading
                         sha256_hash.update(chunk)
-                        i += 1
-                        print('\r{:6.2f}% {:.0f}s'.format((chunks_downloaded/approx_chunks)*100, perf_counter() - start_time), end='')
+                        chunks_downloaded += 1
+                        print('\r{:6.2f}% ({:.0f} / {:.0f} chunks) {:.0f}s'.format((chunks_downloaded/approx_chunks)*100, chunks_downloaded, approx_chunks, perf_counter() - start_time), end='')
             print()
             global total_down
             total_down += downloaded_size
@@ -204,7 +204,7 @@ print("\nDownloading done.")
 if meta_errors:
     print("The following files could not be successfully downloaded:")
     for me in meta_errors:
-        print('\t', me)
+        print(' *', me)
 if kiwix_err:
     print("[!] There was an error with Kiwix and some content did not download; try again later.")
 if total_down:

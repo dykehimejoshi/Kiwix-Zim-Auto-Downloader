@@ -30,7 +30,7 @@ first_line = True
 ttd = 0 # total to download
 with open(csv_fname, 'r') as csf:
     while True:
-        line = csf.readline().strip()
+        line = csf.readline()
         if first_line:
             # Remove the header line ("URL,Name")
             first_line = False
@@ -96,8 +96,8 @@ def download_zim(item):
                         f.write(chunk)
                         # Calculate hash while downloading
                         sha256_hash.update(chunk)
-                        chunks_downloaded += 1
                         print('\r{:6.2f}% ({:.0f} / {:.0f} chunks) {:.0f}s'.format((chunks_downloaded/approx_chunks)*100, chunks_downloaded, approx_chunks, perf_counter() - start_time), end='')
+                        chunks_downloaded += 1
             print()
             global total_down
             total_down += downloaded_size

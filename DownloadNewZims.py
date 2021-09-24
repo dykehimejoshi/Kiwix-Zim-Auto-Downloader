@@ -10,6 +10,10 @@ import hashlib
 # Used to check if a file exists or not and for removing files
 import os
 
+# Used for moving temp download file to current directory
+# Needed if running from a USB, for example
+import shutil
+
 # Used for finding the size of the objects we download
 from sys import getsizeof
 
@@ -54,11 +58,6 @@ total_down = 0
 kiwix_err = 0
 
 def download_zim(item):
-    # TODO: When we see that our file is out of date, instead of deleting the old file
-    # and writing over that, write the newly downloaded file to a temporary filename, and
-    # if there are no failures (such as connection loss or failure to verify hash),
-    # delete the old one and rename the new one to the correct filename.
-
     def get_hash(b):
         #= lambda b: hashlib.sha256(b).hexdigest() # the old one-liner
         # Using the second method to calculate sha256 sums from here:
@@ -73,6 +72,8 @@ def download_zim(item):
     def actually_download():
         print("Downloading", url, "...")
         tmppath = '/tmp/' + fname + '.part'
+        if os.path.isfile(tmppath):
+            os.remove(tmppath)
         try:
             start_time = perf_counter() # start time for calculating time spent downloading a file
             sha256_hash = hashlib.sha256() # calculate the hash while downloading
@@ -110,9 +111,12 @@ def download_zim(item):
                 print("OK hash for", fname)
                 print("Successfully downloaded", url)
                 # Remove the old out-of-date file
-                os.remove(fname)
+                if os.path.isfile("./" + fname):
+                    os.remove('./' + fname)
                 # If the hash is good, move the file from tmp to current directory
-                os.rename(tmppath, fname)
+                # Use shutil here because we may be operating from a USB drive,
+                #   and os.rename/os.replace doesn't work cross-filesystem
+                shutil.move(tmppath, fname)
                 return 0
             else:
                 os.remove(tmppath)
@@ -124,15 +128,17 @@ def download_zim(item):
         except ConnectionError as ce:
             print("[!] Connection error:", str(ce))
             del ce
-            return -1
+            raise
         except requests.exceptions.RequestException as re:
             print("[!] Request Exception:", str(re))
             del re
-            return -1
+            raise
+        except KeyboardInterrupt:
+            if os.path.isfile(tmppath): os.remove(tmppath)
+            raise
         except Exception as e:
             print("[!] Error:", str(e))
             del e
-            return -1
 
     # Set up some vars to refer back to
     url = item[0]
@@ -165,8 +171,6 @@ def download_zim(item):
             else:
                 # It doesn't have the same hash, so go ahead and download it again
                 print(fname, "is out of date, replacing.")
-                # XXX We could probably do more logic than outright removing the file if the hash is not correct,
-                #   like in the event of a network outage mid-download, the old file still exists and is not corrupted and can be used.
                 #os.remove("./" + fname)
                 return actually_download()
         else:
@@ -176,6 +180,9 @@ def download_zim(item):
         print("[!] Memory Error:", str(me))
         del me
         return -2
+    except KeyboardInterrupt:
+        # Pressing C-c while checking the file hash will skip it.
+        return
     except Exception as e:
         print("[!] Error:", str(e))
         del e
@@ -188,23 +195,38 @@ count = 0
 for l in links:
     count = count + 1
     print(f"# {count}/{ttd}")
-    ret = download_zim(l)
-    if ret == -1:
-        errors.append(l)
-    print()
+    try:
+        ret = download_zim(l)
+        if ret == -1:
+            errors.append(l)
+        print()
+    except KeyboardInterrupt:
+        print("\nKeyboard interrupt detected, exiting")
+        break
+    except Exception as ex:
+        print("[!] Error:", str(ex))
 
 # If even after attempting to fix an error after three times it fails, give a list of what failed at the end of the session.
 meta_errors = []
 if errors:
     print("Errors found:")
-    for e in errors:
-        # Try three more times to fix any errors
-        for try_num in range(3):
-            ret = download_zim(e)
-            if ret and try_num == 2:
-                meta_errors.append(e[1])
-            if not ret: # ret = 0 (what we want)
+    try:
+        for e in errors:
+            try:
+                # Try three more times to fix any errors
+                for try_num in range(3):
+                    ret = download_zim(e)
+                    if ret and try_num == 2:
+                        meta_errors.append(e[1])
+                    if not ret: # ret = 0 (what we want)
+                        break
+            except KeyboardInterrupt:
+                raise
                 break
+            except Exception as ex:
+                print("[!] Error:", str(ex))
+    except KeyboardInterrupt:
+        print("\nKeyboard interrupt detected, exiting")
 
 print("\nDownloading done.")
 if meta_errors:

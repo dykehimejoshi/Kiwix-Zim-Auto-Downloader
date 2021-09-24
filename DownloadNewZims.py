@@ -72,6 +72,7 @@ def download_zim(item):
 
     def actually_download():
         print("Downloading", url, "...")
+        tmppath = '/tmp/' + fname + '.part'
         try:
             start_time = perf_counter() # start time for calculating time spent downloading a file
             sha256_hash = hashlib.sha256() # calculate the hash while downloading
@@ -84,7 +85,8 @@ def download_zim(item):
                 downloaded_size = content_length / (1024 ** 2) # downloaded size in MB (or MiB idk)
                 #print('Content-Length:', r.headers['Content-Length']) # for debugging
                 print("%.2f" % (downloaded_size), "MB to download")
-                with open(fname, 'wb') as f:
+                # Assuming we have write permissions in the /tmp directory
+                with open(tmppath, 'wb') as f:
                     chunk_bytes = 8192
                     # variables used for calculating percentage complete
                     chunks_downloaded = 0
@@ -107,11 +109,16 @@ def download_zim(item):
             if fhash == downloaded_hash:
                 print("OK hash for", fname)
                 print("Successfully downloaded", url)
+                # Remove the old out-of-date file
+                os.remove(fname)
+                # If the hash is good, move the file from tmp to current directory
+                os.rename(tmppath, fname)
                 return 0
             else:
-                os.remove(fname)
+                os.remove(tmppath)
                 # Prepending spaces may make it easier to see that something has happened at a glance
-                print("\n\t *** [!!] Hash verification FAILED for", fname, '***\n')
+                print("\n\t *** [!!] Hash verification FAILED for", fname, '***')
+                print("(Old file not removed)")
                 print(' '.join(shasum))
                 return -1
         except ConnectionError as ce:
@@ -160,7 +167,7 @@ def download_zim(item):
                 print(fname, "is out of date, replacing.")
                 # XXX We could probably do more logic than outright removing the file if the hash is not correct,
                 #   like in the event of a network outage mid-download, the old file still exists and is not corrupted and can be used.
-                os.remove("./" + fname)
+                #os.remove("./" + fname)
                 return actually_download()
         else:
             # If the file doesn't exist in the first place, download it
@@ -189,7 +196,6 @@ for l in links:
 # If even after attempting to fix an error after three times it fails, give a list of what failed at the end of the session.
 meta_errors = []
 if errors:
-    print('\n\n\n')
     print("Errors found:")
     for e in errors:
         # Try three more times to fix any errors

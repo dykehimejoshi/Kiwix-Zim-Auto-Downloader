@@ -20,8 +20,9 @@ from sys import getsizeof
 # Used for reading the file with links
 import csv
 
-# Used for calculating time spent downloading a file
-from time import perf_counter
+# perf_counter used for calculating time spent downloading a file,
+# sleep for sleeping a small amount after skipping checking a file
+from time import perf_counter, sleep
 
 # Links:
 # Note: Ending the links with ".sha256" will get their hash file, used for verification.
@@ -182,6 +183,8 @@ def download_zim(item):
         return -2
     except KeyboardInterrupt:
         # Pressing C-c while checking the file hash will skip it.
+        print()
+        sleep(0.5)
         return
     except Exception as e:
         print("[!] Error:", str(e))

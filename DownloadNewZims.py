@@ -135,7 +135,9 @@ def download_zim(item):
             del re
             raise
         except KeyboardInterrupt:
-            if os.path.isfile(tmppath): os.remove(tmppath)
+            if os.path.isfile(tmppath):
+                os.remove(tmppath)
+                print("\nSkipping; old file not removed")
             raise
         except Exception as e:
             print("[!] Error:", str(e))

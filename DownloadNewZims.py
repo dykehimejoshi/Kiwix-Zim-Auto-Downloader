@@ -187,7 +187,7 @@ def download_zim(item):
         # Pressing C-c while checking the file hash will skip it.
         print()
         sleep(0.5)
-        return
+        return 0
     except Exception as e:
         print("[!] Error:", str(e))
         del e
@@ -208,6 +208,8 @@ for l in links:
     except KeyboardInterrupt:
         print("\nKeyboard interrupt detected, exiting")
         break
+#    except ConnectTimeoutError as cte:
+#        print("ConnectTimeoutError")
     except Exception as ex:
         print("[!] Error:", str(ex))
 
